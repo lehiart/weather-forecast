@@ -130,7 +130,6 @@ class App extends Component {
   }
 
   handleResultClick(data, name) {
-    console.log(data)
     this.setState({forecastData: data, data: {city: name} })
   }
 

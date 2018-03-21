@@ -52,6 +52,10 @@
 
 .loader {
     height: 400px;
+    margin: 0 auto;
+    width: 100px;
+    padding-top: 40px;
+    padding-bottom: 40px;
 }
 
 
