@@ -1,6 +1,6 @@
 ## Weather Forecast
 
-to run this app you must run:
+to use this app you must run:
 
 'npm install' and 'npm run'
 
