@@ -8,18 +8,6 @@ import './App.css'
 
 
 
-const renderSuggestion = ({ formattedSuggestion }) => (
-    <div>
-      <strong>{formattedSuggestion.mainText}</strong>
-      {' '}
-      <small>{formattedSuggestion.secondaryText}</small>
-    </div>
-);
-
-const shouldFetchSuggestions = ({ value }) => value.length > 2;
-
-
-
 class App extends Component {
   constructor(props) {
     super(props);
@@ -28,11 +16,24 @@ class App extends Component {
       geocodeResults: null,
       loading: false,
       forecastData: null,
-      data: {}
+      data: {},
+      savedResults: null
     };
 
     this.handleSelect = this.handleSelect.bind(this);
     this.handleChange = this.handleChange.bind(this);
+    this.onError = this.onError.bind(this);
+  }
+
+  componentDidMount() {
+    let previousSearches = []
+    for ( let i = 0, len = localStorage.length; i < len; ++i ) {
+      previousSearches.push({
+        name: localStorage.key(i),
+        data: JSON.parse(localStorage.getItem( localStorage.key( i )))
+      })
+    }
+    this.setState( { savedResults: previousSearches })
   }
 
   handleChange(address) {
@@ -69,22 +70,18 @@ class App extends Component {
         status
     );
     clearSuggestions();
+    this.setState( { forecastData: null })
   };
 
-  formatDate(dateTxt) {
-    const monthNames = ["January", "February", "March",
-      "April", "May", "June", "July",
-      "August", "September", "October",
-      "November", "December"
-    ]
-    let parsedDate = dateTxt.replace(/-0+/g, '-')
-    let date = parsedDate.split(' ')[0].split('-')
-    return `${date[2]} ${monthNames[date[1]]}`
-  }
+  shouldFetchSuggestions = ({ value }) => value.length > 2;
 
-  formatTimeHour(dateTxt) {
-    return parseInt(dateTxt.split(' ')[1].split(':')[0])
-  }
+  renderSuggestion = ({ formattedSuggestion }) => (
+      <div>
+        <strong>{formattedSuggestion.mainText}</strong>
+        {' '}
+        <small>{formattedSuggestion.secondaryText}</small>
+      </div>
+  );
 
   sortByDate(data) {
     const d = data
@@ -129,13 +126,15 @@ class App extends Component {
         },[]);
 
     this.setState( { forecastData: d })
-    localStorage.setItem(`weather of ${this.state.data.city}`, JSON.stringify(d));
+    localStorage.setItem(`Weather of ${this.state.data.city}`, JSON.stringify(d));
   }
 
-
+  handleResultClick(data, name) {
+    console.log(data)
+    this.setState({forecastData: data, data: {city: name} })
+  }
 
   render() {
-
     const inputProps = {
       type: 'text',
       value: this.state.address,
@@ -155,13 +154,13 @@ class App extends Component {
           <h3 className="subtitle">What's your weather?</h3>
           <div className="searchbar-container">
             <PlacesAutocomplete
-                renderSuggestion={renderSuggestion}
+                renderSuggestion={this.renderSuggestion}
                 inputProps={inputProps}
                 classNames={{input:'form-searchbar', autocompleteContainer: 'my-autocomplete-container', autocompleteItem: 'search-item'}}
                 onSelect={this.handleSelect}
                 onEnterKeyDown={this.handleSelect}
                 onError={this.onError}
-                shouldFetchSuggestions={shouldFetchSuggestions}
+                shouldFetchSuggestions={this.shouldFetchSuggestions}
             />
           </div>
           { this.state.loading && (
@@ -175,13 +174,25 @@ class App extends Component {
               <div className="address-title">{this.state.data.city}, {this.state.data.country}</div>
               <div className="card-container">
               { this.state.forecastData.map(card => {
-                return <Card key={this.state.forecastData.time}
+                return <Card key={card.time}
                              data={card}/>
               })}
             </div>
+
             </div>
           }
-
+          { this.state.savedResults &&
+          <div className="previous">
+            <span>Previous Searches</span>
+            { this.state.savedResults.map(res => {
+              return <div key={res.name}
+                          className="searchname"
+                          onClick={() =>this.handleResultClick(res.data, res.name)}>
+                { res.name }
+              </div>
+            })}
+          </div>
+          }
         </div>
     )
   }
